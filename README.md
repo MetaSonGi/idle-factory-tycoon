@@ -1,4 +1,13 @@
-# 🏭 방치형 공장 타이쿤
+# 🏭 방치형 공장 타이쿤 | Idle Factory Tycoon
+
+> 방치형 공장 경영 — 기계 6종·오프라인 보상  
+> Idle factory management with offline rewards
+
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen?style=flat-square)](https://metasongi.github.io/idle-factory-tycoon/) ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square)
+
+🌐 **Live:** https://metasongi.github.io/idle-factory-tycoon/
+
+---
 
 클릭으로 돈을 벌고, 기계로 자동 생산하는 방치형(Idle) 공장 경영 게임입니다.
 외부 라이브러리 없이 단일 HTML 파일로 동작합니다.
@@ -27,3 +36,9 @@
 
 - `index.html` — 게임 본체 (CSS/JS 인라인, 의존성 없음)
 - `.nojekyll` — GitHub Pages용
+
+---
+
+## English Summary
+
+Idle factory management with offline rewards.
