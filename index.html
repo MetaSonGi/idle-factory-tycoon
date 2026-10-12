@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🏭 방치형 공장 타이쿤</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    background: #14171f; color: #f0f2f5;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 12px 12px 60px; }
+  h1 { text-align: center; font-size: 1.5rem; margin: 10px 0 4px; }
+  .sub { text-align: center; color: #9aa3b2; font-size: 0.85rem; margin-bottom: 12px; }
+  .stats {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;
+  }
+  .stat {
+    background: #1e2330; border: 1px solid #2c3345; border-radius: 12px;
+    padding: 10px 8px; text-align: center;
+  }
+  .stat .label { font-size: 0.72rem; color: #9aa3b2; }
+  .stat .value { font-size: 1.02rem; font-weight: 700; color: #ffd166; word-break: keep-all; }
+  .stat .value.small { font-size: 0.92rem; }
+  #clickBtn {
+    display: block; width: 100%; margin: 0 0 14px; padding: 26px 0;
+    font-size: 1.6rem; font-weight: 800; color: #1a1207;
+    background: linear-gradient(180deg, #ffd166, #f4a41a);
+    border: none; border-radius: 18px; cursor: pointer;
+    box-shadow: 0 6px 0 #a86e00, 0 10px 20px rgba(0,0,0,.4);
+    touch-action: manipulation; user-select: none;
+    position: relative; overflow: hidden;
+  }
+  #clickBtn:active { transform: translateY(4px); box-shadow: 0 2px 0 #a86e00; }
+  .float {
+    position: absolute; pointer-events: none; font-weight: 800; color: #fff8e1;
+    text-shadow: 0 2px 4px rgba(0,0,0,.6); font-size: 1.1rem;
+    animation: floatUp 0.9s ease-out forwards;
+  }
+  @keyframes floatUp {
+    from { opacity: 1; transform: translate(-50%, 0); }
+    to { opacity: 0; transform: translate(-50%, -70px); }
+  }
+  h2 { font-size: 1.1rem; margin: 18px 0 8px; padding-left: 4px; }
+  .floor {
+    background: #1a1f2b; border: 1px solid #2c3345; border-radius: 12px;
+    padding: 12px; min-height: 90px; margin-bottom: 6px;
+  }
+  .floor-row { margin-bottom: 8px; }
+  .floor-row:last-child { margin-bottom: 0; }
+  .floor-label { font-size: 0.78rem; color: #9aa3b2; margin-bottom: 2px; }
+  .icons { font-size: 1.6rem; line-height: 1.5; letter-spacing: 2px; }
+  .icons span { display: inline-block; animation: bob 2.4s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  .floor-empty { color: #5a6376; font-size: 0.85rem; text-align: center; padding: 18px 0; }
+  .bulk { display: flex; gap: 6px; margin-bottom: 8px; }
+  .bulk button {
+    flex: 1; padding: 8px; font-size: 0.85rem; font-weight: 700;
+    background: #232a3b; color: #c7cfdd; border: 1px solid #2c3345; border-radius: 8px; cursor: pointer;
+    touch-action: manipulation;
+  }
+  .bulk button.active { background: #2f6df6; border-color: #2f6df6; color: #fff; }
+  .card {
+    background: #1e2330; border: 1px solid #2c3345; border-radius: 12px;
+    padding: 10px 12px; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card .emoji { font-size: 2rem; flex-shrink: 0; }
+  .card .info { flex: 1; min-width: 0; }
+  .card .name { font-weight: 700; font-size: 0.95rem; }
+  .card .detail { font-size: 0.78rem; color: #9aa3b2; margin-top: 2px; }
+  .card .detail b { color: #ffd166; }
+  .buy {
+    flex-shrink: 0; padding: 12px 14px; font-size: 0.85rem; font-weight: 700;
+    background: #2f9e44; color: #fff; border: none; border-radius: 10px; cursor: pointer;
+    touch-action: manipulation; min-width: 96px;
+  }
+  .buy:disabled { background: #3a4152; color: #7a8397; cursor: not-allowed; }
+  .buy .cost { display: block; font-size: 0.75rem; font-weight: 600; margin-top: 2px; }
+  .upg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .upg {
+    background: #1e2330; border: 1px solid #2c3345; border-radius: 12px;
+    padding: 10px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .upg .uname { font-weight: 700; font-size: 0.85rem; }
+  .upg .udesc { font-size: 0.75rem; color: #9aa3b2; flex: 1; }
+  .upg .ulv { font-size: 0.72rem; color: #7ee081; }
+  .upg button {
+    padding: 9px; font-size: 0.82rem; font-weight: 700;
+    background: #7048e8; color: #fff; border: none; border-radius: 8px; cursor: pointer;
+    touch-action: manipulation;
+  }
+  .upg button:disabled { background: #3a4152; color: #7a8397; cursor: not-allowed; }
+  .upg.maxed button { background: #3a4152; color: #7a8397; }
+  .footer { text-align: center; margin-top: 22px; color: #5a6376; font-size: 0.78rem; }
+  #resetBtn {
+    margin-top: 10px; padding: 10px 22px; font-size: 0.85rem;
+    background: transparent; color: #e8590c; border: 1px solid #e8590c;
+    border-radius: 10px; cursor: pointer; touch-action: manipulation;
+  }
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,.65);
+    display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: #232a3b; border: 1px solid #3a4358; border-radius: 16px;
+    padding: 24px; max-width: 380px; width: 100%; text-align: center;
+  }
+  .modal h3 { margin: 0 0 10px; font-size: 1.15rem; }
+  .modal p { font-size: 0.9rem; color: #c7cfdd; line-height: 1.6; }
+  .modal .big { font-size: 1.5rem; font-weight: 800; color: #ffd166; display: block; margin: 8px 0; }
+  .modal .row { display: flex; gap: 8px; margin-top: 16px; }
+  .modal .row button {
+    flex: 1; padding: 12px; font-size: 0.95rem; font-weight: 700;
+    border: none; border-radius: 10px; cursor: pointer; touch-action: manipulation;
+  }
+  .btn-ok { background: #2f9e44; color: #fff; }
+  .btn-danger { background: #e03131; color: #fff; }
+  .btn-cancel { background: #3a4152; color: #c7cfdd; }
+  @media (max-width: 480px) {
+    .upg-grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: 1fr 1fr 1fr; }
+    .stat .value { font-size: 0.9rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🏭 방치형 공장 타이쿤</h1>
+  <div class="sub">클릭으로 벌고, 기계로 자동 생산! 공장을 키워보세요</div>
+
+  <div class="stats">
+    <div class="stat"><div class="label">💰 보유금</div><div class="value" id="money">0원</div></div>
+    <div class="stat"><div class="label">📈 초당 수익</div><div class="value small" id="perSec">0원/초</div></div>
+    <div class="stat"><div class="label">👆 클릭당</div><div class="value small" id="perClick">1원</div></div>
+  </div>
+
+  <button id="clickBtn">🔨 생산하기</button>
+
+  <h2>🏭 내 공장</h2>
+  <div class="floor" id="floor"></div>
+
+  <h2>🤖 기계 구매</h2>
+  <div class="bulk" id="bulkToggle">
+    <button data-n="1" class="active">×1</button>
+    <button data-n="10">×10</button>
+    <button data-n="max">최대</button>
+  </div>
+  <div id="machines"></div>
+
+  <h2>⬆️ 업그레이드</h2>
+  <div class="upg-grid" id="upgrades"></div>
+
+  <div class="footer">
+    <div id="saveInfo">자동 저장 중…</div>
+    <div>총 클릭 <span id="statClicks">0</span>회 · 누적 수익 <span id="statEarned">0원</span></div>
+    <button id="resetBtn">🗑 처음부터 다시 시작</button>
+  </div>
+</div>
+
+<!-- 복귀 보상 모달 -->
+<div class="modal-bg" id="welcomeModal">
+  <div class="modal">
+    <h3>🎉 돌아오신 걸 환영합니다!</h3>
+    <p>부재 중에도 공장이 열심히 돌아갔어요.<br><span id="awayTime"></span></p>
+    <span class="big" id="awayReward"></span>
+    <div class="row"><button class="btn-ok" id="welcomeOk">수령하기</button></div>
+  </div>
+</div>
+
+<!-- 리셋 확인 모달 -->
+<div class="modal-bg" id="resetModal">
+  <div class="modal">
+    <h3>⚠️ 정말 처음부터 시작할까요?</h3>
+    <p>모든 돈, 기계, 업그레이드 기록이 삭제됩니다.<br>이 작업은 되돌릴 수 없어요.</p>
+    <div class="row">
+      <button class="btn-cancel" id="resetCancel">취소</button>
+      <button class="btn-danger" id="resetOk">삭제하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============ 데이터 정의 ============ */
+const SAVE_KEY = "idle_factory_tycoon_v1";
+const COST_R = 1.15;               // 기계 가격 상승 배율
+const OFFLINE_CAP = 8 * 3600;      // 오프라인 보상 최대 8시간(초)
+const MAX_ICONS = 30;              // 공장 바닥에 표시할 기계당 최대 아이콘 수
+
+const MACHINES = [
+  { id: "conv",    name: "컨베이어", emoji: "🏭", baseCost: 15,     baseRate: 0.2  },
+  { id: "arm",     name: "로봇팔",   emoji: "🤖", baseCost: 120,    baseRate: 1.5  },
+  { id: "printer", name: "3D프린터", emoji: "🖨️", baseCost: 900,    baseRate: 9    },
+  { id: "welder",  name: "용접기",   emoji: "⚡", baseCost: 6000,   baseRate: 55   },
+  { id: "agv",     name: "AGV",      emoji: "🚚", baseCost: 45000,  baseRate: 380  },
+  { id: "ai",      name: "AI검사기", emoji: "🧠", baseCost: 350000, baseRate: 3000 },
+];
+
+const UPGRADES = [
+  { id: "click",   name: "💪 손가락 강화",  desc: l => "클릭 수익 ×2",        baseCost: 60,   costMult: 5, maxLevel: 10 },
+  { id: "global",  name: "🏗️ 공장 자동화",  desc: l => "전체 생산 +50%",      baseCost: 250,  costMult: 7, maxLevel: 10 },
+  { id: "offline", name: "🌙 24시간 가동",  desc: l => "오프라인 보상 효율 +25%p (현재 " + (50 + 25 * l) + "%)", baseCost: 1500, costMult: 6, maxLevel: 2 },
+];
+// 기계별 효율 ×2 업그레이드 (일회성)
+MACHINES.forEach(m => {
+  UPGRADES.push({
+    id: "m_" + m.id, name: m.emoji + " " + m.name + " 개조",
+    desc: () => m.name + " 효율 ×2", baseCost: m.baseCost * 25, costMult: 1, maxLevel: 1
+  });
+});
+
+/* ============ 상태 ============ */
+let S;
+function defaultState() {
+  return {
+    money: 0,
+    counts: MACHINES.map(() => 0),
+    upg: {},              // {upgradeId: level}
+    totalClicks: 0,
+    totalEarned: 0,
+    savedAt: Date.now()
+  };
+}
+S = defaultState();
+let buyMode = 1; // 1 | 10 | "max"
+
+/* ============ 숫자 포맷 (한국 단위) ============ */
+const BIG_UNITS = [
+  ["무량대수", 1e68], ["불가사의", 1e64], ["나유타", 1e60], ["아승기", 1e56],
+  ["항하사", 1e52], ["극", 1e48], ["재", 1e44], ["정", 1e40], ["간", 1e36],
+  ["구", 1e32], ["양", 1e28], ["자", 1e24], ["해", 1e20], ["경", 1e16],
+  ["조", 1e12], ["억", 1e8], ["만", 1e4]
+];
+function trimNum(n) {
+  if (!isFinite(n)) return "∞";
+  if (n >= 1000) return Math.floor(n).toLocaleString("ko-KR");
+  const r = Math.round(n * 10) / 10;
+  return (r % 1 === 0 ? r.toFixed(0) : r.toFixed(1));
+}
+function fmt(n) {
+  if (!isFinite(n)) return "∞원";
+  n = Math.max(0, n);
+  if (n < 10000) return trimNum(n) + "원";
+  if (n >= 1e72) return n.toExponential(2).replace("e+", "×10^") + "원"; // 천문학적 수치: 지수 표기
+  let res = "", rest = n, shown = 0;
+  for (const [u, v] of BIG_UNITS) {
+    if (rest >= v && shown < 2) {
+      const d = Math.floor(rest / v);
+      res += d + u + " ";
+      rest -= d * v;
+      shown++;
+    }
+  }
+  return res.trim() + "원";
+}
+function fmtRate(n) {
+  if (!isFinite(n)) return "∞원/초";
+  if (n < 10000) return trimNum(n) + "원/초";
+  return fmt(n).replace(/원$/, "") + "/초";
+}
+
+/* ============ 계산 ============ */
+const upgLevel = id => S.upg[id] || 0;
+const clickGain = () => Math.pow(2, upgLevel("click"));
+const globalMult = () => Math.pow(1.5, upgLevel("global"));
+const machineMult = i => upgLevel("m_" + MACHINES[i].id) > 0 ? 2 : 1;
+const offlineEff = () => 0.5 + 0.25 * upgLevel("offline");
+
+function machineRate(i) {
+  return MACHINES[i].baseRate * machineMult(i) * globalMult();
+}
+function incomePerSec() {
+  let t = 0;
+  for (let i = 0; i < MACHINES.length; i++) t += S.counts[i] * machineRate(i);
+  return t;
+}
+function machineCost(i) {
+  return MACHINES[i].baseCost * Math.pow(COST_R, S.counts[i]);
+}
+function bulkCost(i, n) {
+  const c0 = machineCost(i);
+  return c0 * (Math.pow(COST_R, n) - 1) / (COST_R - 1);
+}
+function maxAffordable(i) {
+  const c0 = machineCost(i);
+  if (S.money < c0) return 0;
+  const n = Math.floor(Math.log(S.money * (COST_R - 1) / c0 + 1) / Math.log(COST_R));
+  return Math.max(0, n);
+}
+function upgradeCost(u) {
+  return u.baseCost * Math.pow(u.costMult, upgLevel(u.id));
+}
+
+/* ============ 저장 / 불러오기 ============ */
+function save() {
+  S.savedAt = Date.now();
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(S));
+    document.getElementById("saveInfo").textContent =
+      "💾 저장됨 " + new Date().toLocaleTimeString("ko-KR");
+  } catch (e) { /* 저장 실패 무시 */ }
+}
+function load() {
+  let raw = null;
+  try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
+  if (!raw) return false;
+  try {
+    const d = JSON.parse(raw);
+    if (typeof d !== "object" || d === null) return false;
+    const s = defaultState();
+    if (isFinite(d.money) && d.money >= 0) s.money = d.money;
+    if (Array.isArray(d.counts)) {
+      for (let i = 0; i < MACHINES.length; i++) {
+        const c = d.counts[i];
+        if (Number.isInteger(c) && c >= 0) s.counts[i] = Math.min(c, 1e9);
+      }
+    }
+    if (typeof d.upg === "object" && d.upg !== null) {
+      for (const u of UPGRADES) {
+        const l = d.upg[u.id];
+        if (Number.isInteger(l) && l >= 0) s.upg[u.id] = Math.min(l, u.maxLevel);
+      }
+    }
+    if (Number.isInteger(d.totalClicks) && d.totalClicks >= 0) s.totalClicks = d.totalClicks;
+    if (isFinite(d.totalEarned) && d.totalEarned >= 0) s.totalEarned = d.totalEarned;
+    S = s;
+    return isFinite(d.savedAt) ? d.savedAt : null;
+  } catch (e) { return false; }
+}
+
+/* ============ UI 렌더링 ============ */
+const $ = id => document.getElementById(id);
+let lastFloorKey = "";
+
+function renderMachines() {
+  const box = $("machines");
+  box.innerHTML = "";
+  MACHINES.forEach((m, i) => {
+    const n = buyMode === "max" ? Math.max(1, maxAffordable(i)) : buyMode;
+    const cost = bulkCost(i, n);
+    const eff = machineMult(i) > 1 ? " <b>×2 효율↑</b>" : "";
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML =
+      '<div class="emoji">' + m.emoji + '</div>' +
+      '<div class="info"><div class="name">' + m.name + ' <span style="color:#7ee081">×' + S.counts[i] + '</span>' + eff + '</div>' +
+      '<div class="detail">개당 <b>' + fmtRate(machineRate(i)).replace("/초", "") + '/초</b> · 보유 생산 <b>' + fmtRate(S.counts[i] * machineRate(i)).replace("/초", "") + '/초</b></div></div>';
+    const btn = document.createElement("button");
+    btn.className = "buy";
+    btn.innerHTML = '구매 ×' + n + '<span class="cost">' + fmt(cost) + '</span>';
+    btn.disabled = S.money < cost;
+    btn.onclick = () => buyMachine(i);
+    card.appendChild(btn);
+    box.appendChild(card);
+  });
+}
+
+function renderUpgrades() {
+  const box = $("upgrades");
+  box.innerHTML = "";
+  UPGRADES.forEach(u => {
+    const lv = upgLevel(u.id);
+    const maxed = lv >= u.maxLevel;
+    const cost = upgradeCost(u);
+    const div = document.createElement("div");
+    div.className = "upg" + (maxed ? " maxed" : "");
+    div.innerHTML =
+      '<div class="uname">' + u.name + '</div>' +
+      '<div class="udesc">' + u.desc(lv) + '</div>' +
+      '<div class="ulv">' + (maxed ? "MAX" : "Lv." + lv + " / " + u.maxLevel) + '</div>';
+    const btn = document.createElement("button");
+    btn.textContent = maxed ? "완료" : fmt(cost);
+    btn.disabled = maxed || S.money < cost;
+    btn.onclick = () => buyUpgrade(u);
+    div.appendChild(btn);
+    box.appendChild(div);
+  });
+}
+
+function renderFloor() {
+  const key = S.counts.join(",");
+  if (key === lastFloorKey) return;
+  lastFloorKey = key;
+  const box = $("floor");
+  box.innerHTML = "";
+  let any = false;
+  MACHINES.forEach((m, i) => {
+    const c = S.counts[i];
+    if (c <= 0) return;
+    any = true;
+    const row = document.createElement("div");
+    row.className = "floor-row";
+    const show = Math.min(c, MAX_ICONS);
+    let icons = "";
+    for (let k = 0; k < show; k++) {
+      icons += '<span style="animation-delay:' + (Math.random() * 2.4).toFixed(2) + 's">' + m.emoji + '</span>';
+    }
+    row.innerHTML = '<div class="floor-label">' + m.name + ' ×' + c + '</div>' +
+      '<div class="icons">' + icons + (c > MAX_ICONS ? '<span style="font-size:1rem;color:#9aa3b2"> +' + (c - MAX_ICONS) + '</span>' : '') + '</div>';
+    box.appendChild(row);
+  });
+  if (!any) box.innerHTML = '<div class="floor-empty">아직 기계가 없어요. 기계를 구매하면 여기에 표시됩니다 🏭</div>';
+}
+
+function renderStats() {
+  $("money").textContent = fmt(S.money);
+  $("perSec").textContent = fmtRate(incomePerSec());
+  $("perClick").textContent = fmt(clickGain());
+  $("statClicks").textContent = S.totalClicks.toLocaleString("ko-KR");
+  $("statEarned").textContent = fmt(S.totalEarned);
+}
+
+function render() {
+  renderStats();
+  renderMachines();
+  renderUpgrades();
+  renderFloor();
+}
+
+/* ============ 액션 ============ */
+function buyMachine(i) {
+  const n = buyMode === "max" ? maxAffordable(i) : buyMode;
+  if (n < 1) return;
+  const cost = bulkCost(i, n);
+  if (S.money < cost) return;
+  S.money -= cost;
+  S.counts[i] += n;
+  save();
+  render();
+}
+
+function buyUpgrade(u) {
+  const lv = upgLevel(u.id);
+  if (lv >= u.maxLevel) return;
+  const cost = upgradeCost(u);
+  if (S.money < cost) return;
+  S.money -= cost;
+  S.upg[u.id] = lv + 1;
+  save();
+  render();
+}
+
+// 생산 버튼 클릭 (모바일 터치 + PC 마우스 모두 click 이벤트로 처리)
+$("clickBtn").addEventListener("click", function (e) {
+  const g = clickGain();
+  S.money += g;
+  S.totalClicks++;
+  S.totalEarned += g;
+  // 떠오르는 "+N원" 효과
+  const f = document.createElement("span");
+  f.className = "float";
+  f.textContent = "+" + fmt(g);
+  const rect = this.getBoundingClientRect();
+  const x = (e.clientX || rect.left + rect.width / 2) - rect.left;
+  const y = (e.clientY || rect.top + rect.height / 2) - rect.top;
+  f.style.left = x + "px";
+  f.style.top = y + "px";
+  f.style.transform = "translate(-50%, 0)";
+  this.appendChild(f);
+  setTimeout(() => f.remove(), 950);
+  renderStats();
+  renderMachines();
+  renderUpgrades();
+});
+
+// 구매 단위 토글
+$("bulkToggle").addEventListener("click", function (e) {
+  const b = e.target.closest("button");
+  if (!b) return;
+  buyMode = b.dataset.n === "max" ? "max" : parseInt(b.dataset.n, 10);
+  this.querySelectorAll("button").forEach(x => x.classList.toggle("active", x === b));
+  renderMachines();
+});
+
+// 리셋
+$("resetBtn").addEventListener("click", () => $("resetModal").classList.add("show"));
+$("resetCancel").addEventListener("click", () => $("resetModal").classList.remove("show"));
+$("resetOk").addEventListener("click", () => {
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+  S = defaultState();
+  lastFloorKey = "";
+  $("resetModal").classList.remove("show");
+  save();
+  render();
+});
+$("welcomeOk").addEventListener("click", () => $("welcomeModal").classList.remove("show"));
+
+/* ============ 게임 루프 ============ */
+let lastTick = Date.now();
+let lastSave = Date.now();
+setInterval(() => {
+  const now = Date.now();
+  const dt = Math.min((now - lastTick) / 1000, 5); // 탭 전환 등 긴 공백 보정
+  lastTick = now;
+  const gain = incomePerSec() * dt;
+  if (gain > 0) {
+    S.money += gain;
+    S.totalEarned += gain;
+  }
+  renderStats();
+  renderMachines();
+  renderUpgrades();
+  renderFloor();
+  if (now - lastSave >= 5000) { lastSave = now; save(); }
+}, 100);
+
+window.addEventListener("beforeunload", save);
+document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
+
+/* ============ 시작 ============ */
+(function init() {
+  const prevSavedAt = load();
+  render();
+  // 오프라인 복귀 보상
+  if (prevSavedAt) {
+    const awaySec = (Date.now() - prevSavedAt) / 1000;
+    if (awaySec > 120) { // 2분 이상 부재 시에만
+      const effSec = Math.min(awaySec, OFFLINE_CAP);
+      const reward = Math.floor(incomePerSec() * effSec * offlineEff());
+      if (reward > 0) {
+        S.money += reward;
+        S.totalEarned += reward;
+        const h = Math.floor(awaySec / 3600), m = Math.floor((awaySec % 3600) / 60);
+        $("awayTime").textContent = "부재 시간: " + (h > 0 ? h + "시간 " : "") + m + "분" +
+          (awaySec >= OFFLINE_CAP ? " (최대 8시간까지 보상)" : "");
+        $("awayReward").textContent = "+" + fmt(reward);
+        $("welcomeModal").classList.add("show");
+        save();
+        render();
+      }
+    }
+  }
+})();
+</script>
+</body>
+</html>
